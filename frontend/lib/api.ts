@@ -1,4 +1,4 @@
-import type { ApiError, Product } from "@/types";
+import type { ApiError, Cart, Product } from "@/types";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5223/api";
 
@@ -45,6 +45,10 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
 export const api = {
   getProducts: () => request<Product[]>("/products"),
+
+  createCart: () => request<{ cartId: string }>("/carts", { method: "POST" }),
+
+  getCart: (cartId: string) => request<Cart>(`/carts/${cartId}`),
 };
 
 /** รวม base ของ static files กับ path จาก BE เช่น /products/P001.jpg */

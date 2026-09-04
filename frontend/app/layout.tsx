@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Sarabun, Space_Grotesk } from "next/font/google";
 import { Navbar } from "@/components/Navbar";
+import { CartProvider } from "@/contexts/CartContext";
 import "@/styles/globals.css";
 
 const display = Space_Grotesk({
@@ -28,10 +29,12 @@ export default function RootLayout({
   return (
     <html lang="th" className={`${display.variable} ${body.variable} h-full`}>
       <body className="min-h-full antialiased">
-        <div className="site-shell">
-          <Navbar />
-          <main className="page">{children}</main>
-        </div>
+        <CartProvider>
+          <div className="site-shell">
+            <Navbar />
+            <main className="page">{children}</main>
+          </div>
+        </CartProvider>
       </body>
     </html>
   );
