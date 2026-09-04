@@ -6,7 +6,7 @@ using ShopApi.Repositories;
 
 namespace ShopApi.Services;
 
-public class CartService(ICartRepository carts, AppDbContext db) : ICartService
+public class CartService(ICartRepository carts, IProductRepository products, AppDbContext db) : ICartService
 {
     public async Task<Guid> CreateAsync(CancellationToken ct = default)
     {
@@ -22,6 +22,51 @@ public class CartService(ICartRepository carts, AppDbContext db) : ICartService
     {
         var cart = await carts.GetCartWithItemsAsync(cartId, ct) ?? throw new NotFoundException("CART_NOT_FOUND", "ไม่พบตะกร้าสินค้า");
         return ToResponse(cart);
+    }
+
+    public async Task<CartDto> AddItemAsync(Guid cartId, AddToCartRequest request, CancellationToken ct = default)
+    {
+        var cart = await carts.GetCartWithItemsAsync(cartId, ct)
+            ?? throw new NotFoundException("CART_NOT_FOUND", "ไม่พบตะกร้าสินค้า");
+
+        var product = await products.GetByIdWithStockAsync(request.ProductId, ct)
+            ?? throw new NotFoundException("PRODUCT_NOT_FOUND", $"ไม่พบสินค้ารหัส {request.ProductId}");
+
+        if (!product.IsActive)
+            throw new BusinessException("PRODUCT_UNAVAILABLE", $"สินค้า “{product.Name}” ไม่เปิดขายแล้ว");
+
+        var availableStock = product.Stock?.Quantity ?? 0;
+        var existing = cart.Items.FirstOrDefault(i => i.ProductId == request.ProductId);
+        var inCart = existing?.Quantity ?? 0;
+
+        // เทียบ "ที่มีอยู่ในตะกร้าแล้ว + ที่จะเพิ่ม" กับสต๊อก
+        if (inCart + request.Quantity > availableStock)
+        {
+            throw new BusinessException(
+                "INSUFFICIENT_STOCK",
+                $"สินค้า “{product.Name}” คงเหลือ {availableStock} {product.Unit} (ในตะกร้ามีแล้ว {inCart})",
+                new { productId = product.Id, availableStock, inCart });
+        }
+
+        if (existing is not null)
+        {
+            existing.Quantity += request.Quantity;
+        }
+        else
+        {
+            cart.Items.Add(new CartItem
+            {
+                CartId = cart.Id,
+                ProductId = product.Id,
+                Quantity = request.Quantity
+            });
+
+        }
+
+        cart.UpdatedAt = DateTime.UtcNow;
+        await db.SaveChangesAsync(ct);
+
+        return await GetAsync(cartId, ct);
     }
 
     private static CartDto ToResponse(Cart cart)

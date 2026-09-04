@@ -1,5 +1,6 @@
 using System.Text.Encodings.Web;
 using System.Text.Unicode;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ShopApi.Common;
 using ShopApi.Data;
@@ -25,6 +26,25 @@ builder.Services.AddScoped<ICartRepository, CartRepository>();
 
 builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<ICartService, CartService>();
+
+builder.Services.Configure<ApiBehaviorOptions>(options =>
+{
+    options.InvalidModelStateResponseFactory = context =>
+    {
+        var errors = context.ModelState
+            .Where(entry => entry.Value?.Errors.Count > 0)
+            .ToDictionary(
+                entry => entry.Key,
+                entry => entry.Value!.Errors.Select(e => e.ErrorMessage).ToArray());
+
+        return new BadRequestObjectResult(new
+        {
+            code = "VALIDATION_ERROR",
+            message = "ข้อมูลที่ส่งมาไม่ถูกต้อง",
+            details = errors
+        });
+    };
+});
 
 builder.Services.AddCors(options =>
     options.AddPolicy(FrontendCors, policy => policy

@@ -19,4 +19,9 @@ public class CartsController(ICartService carts) : ControllerBase
     [HttpGet("{cartId:guid}")]
     public async Task<ActionResult<CartDto>> GetById(Guid cartId, CancellationToken ct) =>
         Ok(await carts.GetAsync(cartId, ct));
+
+    [HttpPost("{cartId:guid}/items")]
+    public async Task<ActionResult<CartDto>> AddItem(
+        Guid cartId, [FromBody] AddToCartRequest request, CancellationToken ct) =>
+        Ok(await carts.AddItemAsync(cartId, request, ct));
 }
