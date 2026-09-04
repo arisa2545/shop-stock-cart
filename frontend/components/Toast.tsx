@@ -10,8 +10,8 @@ export function Toast() {
   return (
     <div
       className={`toast toast--${toast.tone}`}
-      role="status"
-      aria-live="polite"
+      role={toast.tone === "error" ? "alert" : "status"}
+      aria-live={toast.tone === "error" ? "assertive" : "polite"}
     >
       <p>{toast.message}</p>
       <button type="button" className="toast__close" onClick={clearToast}>

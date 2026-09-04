@@ -219,8 +219,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
       const id = await ensureCart();
       const result = await api.checkout(id);
 
-      const next = await api.getCart(id);
-      setCart(next);
+      try {
+        setCart(await api.getCart(id));
+      } catch {}
 
       return result;
     } catch (err) {
