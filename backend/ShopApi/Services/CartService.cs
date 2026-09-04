@@ -102,6 +102,40 @@ public class CartService(ICartRepository carts, IProductRepository products, App
         return await GetAsync(cartId, ct);
     }
 
+    public async Task<CartDto> RemoveItemAsync(Guid cartId, int productId, CancellationToken ct = default)
+    {
+        var cart = await carts.GetCartWithItemsAsync(cartId, ct)
+            ?? throw new NotFoundException("CART_NOT_FOUND", "ไม่พบตะกร้าสินค้า");
+
+        var item = cart.Items.FirstOrDefault(i => i.ProductId == productId)
+            ?? throw new NotFoundException("CART_ITEM_NOT_FOUND", "ไม่พบสินค้านี้ในตะกร้า");
+
+        db.CartItems.Remove(item);
+        cart.UpdatedAt = DateTime.UtcNow;
+
+        await db.SaveChangesAsync(ct);
+
+        return await GetAsync(cartId, ct);
+    }
+
+    public async Task<CartDto> ClearAsync(Guid cartId, CancellationToken ct = default)
+    {
+        var cart = await carts.GetCartWithItemsAsync(cartId, ct)
+            ?? throw new NotFoundException("CART_NOT_FOUND", "ไม่พบตะกร้าสินค้า");
+
+        // ตะกร้าว่างอยู่แล้วก็ถือว่าสำเร็จ ไม่ต้อง error — กดล้างซ้ำต้องไม่พัง
+        if (cart.Items.Count > 0)
+        {
+            db.CartItems.RemoveRange(cart.Items);
+            cart.UpdatedAt = DateTime.UtcNow;
+
+            await db.SaveChangesAsync(ct);
+        }
+
+        // ❌ ไม่ลบแถว Carts — ตะกร้าเป็นของถาวร cartId ใน localStorage ต้องใช้ต่อได้
+        return await GetAsync(cartId, ct);
+    }
+
     private static CartDto ToResponse(Cart cart)
     {
         var items = cart.Items

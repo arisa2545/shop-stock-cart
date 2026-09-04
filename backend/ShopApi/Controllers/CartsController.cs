@@ -29,4 +29,12 @@ public class CartsController(ICartService carts) : ControllerBase
     public async Task<ActionResult<CartDto>> UpdateQuantity(
         Guid cartId, int productId, [FromBody] UpdateQuantityRequest request, CancellationToken ct) =>
         Ok(await carts.UpdateQuantityAsync(cartId, productId, request, ct));
+
+    [HttpDelete("{cartId:guid}/items/{productId:int}")]
+    public async Task<ActionResult<CartDto>> RemoveItem(Guid cartId, int productId, CancellationToken ct) =>
+        Ok(await carts.RemoveItemAsync(cartId, productId, ct));
+
+    [HttpDelete("{cartId:guid}/items")]
+    public async Task<ActionResult<CartDto>> Clear(Guid cartId, CancellationToken ct) =>
+        Ok(await carts.ClearAsync(cartId, ct));
 }
