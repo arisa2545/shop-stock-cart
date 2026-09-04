@@ -69,6 +69,39 @@ public class CartService(ICartRepository carts, IProductRepository products, App
         return await GetAsync(cartId, ct);
     }
 
+    public async Task<CartDto> UpdateQuantityAsync(Guid cartId, int productId, UpdateQuantityRequest request, CancellationToken ct = default)
+    {
+        var cart = await carts.GetCartWithItemsAsync(cartId, ct)
+            ?? throw new NotFoundException("CART_NOT_FOUND", "ไม่พบตะกร้าสินค้า");
+
+        var item = cart.Items.FirstOrDefault(i => i.ProductId == productId)
+            ?? throw new NotFoundException("CART_ITEM_NOT_FOUND", "ไม่พบสินค้านี้ในตะกร้า");
+
+        if (request.Quantity == 0)
+        {
+            db.CartItems.Remove(item);
+        }
+        else
+        {
+            var availableStock = item.Product.Stock?.Quantity ?? 0;
+
+            if (request.Quantity > availableStock)
+            {
+                throw new BusinessException(
+                    "INSUFFICIENT_STOCK",
+                    $"สินค้า “{item.Product.Name}” คงเหลือ {availableStock} {item.Product.Unit}",
+                    new { productId, availableStock, inCart = item.Quantity });
+            }
+
+            item.Quantity = request.Quantity;
+        }
+
+        cart.UpdatedAt = DateTime.UtcNow;
+        await db.SaveChangesAsync(ct);
+
+        return await GetAsync(cartId, ct);
+    }
+
     private static CartDto ToResponse(Cart cart)
     {
         var items = cart.Items
