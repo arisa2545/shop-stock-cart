@@ -1,4 +1,4 @@
-import type { ApiError, Cart, Product } from "@/types";
+import type { ApiError, Cart, CheckoutResult, Product } from "@/types";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5223/api";
 
@@ -67,6 +67,13 @@ export const api = {
 
   clearCart: (cartId: string) =>
     request<Cart>(`/carts/${cartId}/items`, { method: "DELETE" }),
+
+  /** ไม่ส่ง cartItemIds = จ่ายทั้งตะกร้า · ส่ง array = จ่ายเฉพาะที่เลือก (ตอนนี้เป็นการจ่ายทั้ง cart) */
+  checkout: (cartId: string, cartItemIds?: number[]) =>
+    request<CheckoutResult>(`/carts/${cartId}/checkout`, {
+      method: "POST",
+      body: JSON.stringify({ cartItemIds: cartItemIds ?? [] }),
+    }),
 };
 
 /** รวม base ของ static files กับ path จาก BE เช่น /products/P001.jpg */

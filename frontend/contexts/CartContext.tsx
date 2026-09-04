@@ -9,7 +9,7 @@ import {
   type ReactNode,
 } from "react";
 import { api, ApiRequestError } from "@/lib/api";
-import type { Cart } from "@/types";
+import type { Cart, CheckoutResult } from "@/types";
 
 const CART_STORAGE_KEY = "shop-stock-cart:cartId";
 
@@ -35,6 +35,7 @@ type CartContextValue = {
   updateQuantity: (productId: number, quantity: number) => Promise<boolean>;
   removeItem: (productId: number) => Promise<boolean>;
   clearCart: () => Promise<boolean>;
+  checkout: () => Promise<CheckoutResult | null>;
 };
 
 const CartContext = createContext<CartContextValue | null>(null);
@@ -212,6 +213,33 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
   }, [createAndPersistCart, ensureCart]);
 
+  const checkout = useCallback(async () => {
+    try {
+      const id = await ensureCart();
+      const result = await api.checkout(id);
+
+      const next = await api.getCart(id);
+      setCart(next);
+
+      return result;
+    } catch (err) {
+      if (err instanceof ApiRequestError) {
+        // ตะกร้าหายไป → สร้างใบใหม่ ไม่ปล่อยให้ค้าง error
+        if (err.code === "CART_NOT_FOUND") {
+          await createAndPersistCart();
+        } else {
+          await ensureCart().catch(() => undefined);
+        }
+
+        setToast({ message: err.message, tone: "error" });
+        return null;
+      }
+
+      setToast({ message: "ชำระเงินไม่สำเร็จ", tone: "error" });
+      return null;
+    }
+  }, [createAndPersistCart, ensureCart]);
+
   useEffect(() => {
     let cancelled = false;
 
@@ -256,6 +284,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         updateQuantity,
         removeItem,
         clearCart,
+        checkout,
       }}
     >
       {children}
