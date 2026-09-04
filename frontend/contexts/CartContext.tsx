@@ -32,6 +32,7 @@ type CartContextValue = {
   ensureCart: () => Promise<string>;
   refreshCart: () => Promise<void>;
   addToCart: (productId: number, quantity?: number) => Promise<boolean>;
+  updateQuantity: (productId: number, quantity: number) => Promise<boolean>;
 };
 
 const CartContext = createContext<CartContextValue | null>(null);
@@ -134,6 +135,26 @@ export function CartProvider({ children }: { children: ReactNode }) {
     [createAndPersistCart, ensureCart],
   );
 
+  const updateQuantity = useCallback(
+    async (productId: number, quantity: number) => {
+      try {
+        const id = await ensureCart();
+        const next = await api.updateCartItem(id, productId, quantity);
+        setCart(next);
+        return true;
+      } catch (err) {
+        if (err instanceof ApiRequestError) {
+          setToast({ message: err.message, tone: "error" });
+          return false;
+        }
+
+        setToast({ message: "ปรับจำนวนไม่สำเร็จ", tone: "error" });
+        return false;
+      }
+    },
+    [ensureCart],
+  );
+
   useEffect(() => {
     let cancelled = false;
 
@@ -175,6 +196,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         ensureCart,
         refreshCart,
         addToCart,
+        updateQuantity,
       }}
     >
       {children}

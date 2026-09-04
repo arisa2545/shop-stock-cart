@@ -6,7 +6,7 @@ export default function CartPage() {
     <>
       <header className="page-head">
         <h1>ตะกร้าสินค้า</h1>
-        <p>รายการในตะกร้าจากเซิร์ฟเวอร์ — ยังไม่รองรับแก้ไขในรอบนี้</p>
+        <p>ปรับจำนวนได้ด้วยปุ่ม + / −</p>
       </header>
       <CartView />
     </>

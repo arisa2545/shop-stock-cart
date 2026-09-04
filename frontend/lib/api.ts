@@ -55,6 +55,12 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ productId, quantity }),
     }),
+
+  updateCartItem: (cartId: string, productId: number, quantity: number) =>
+    request<Cart>(`/carts/${cartId}/items/${productId}`, {
+      method: "PUT",
+      body: JSON.stringify({ quantity }),
+    }),
 };
 
 /** รวม base ของ static files กับ path จาก BE เช่น /products/P001.jpg */
