@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 using ShopApi.DTOs;
 using ShopApi.Services;
 
@@ -37,4 +38,11 @@ public class CartsController(ICartService carts) : ControllerBase
     [HttpDelete("{cartId:guid}/items")]
     public async Task<ActionResult<CartDto>> Clear(Guid cartId, CancellationToken ct) =>
         Ok(await carts.ClearAsync(cartId, ct));
+
+    [HttpPost("{cartId:guid}/checkout")]
+    public async Task<ActionResult<CheckoutResultDto>> Checkout(
+        Guid cartId,
+        [FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] CheckoutRequest? request,
+        CancellationToken ct) =>
+        Ok(await carts.CheckoutAsync(cartId, request, ct));
 }

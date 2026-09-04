@@ -1,3 +1,4 @@
+using System.Globalization;
 using ShopApi.Common;
 using ShopApi.Data;
 using ShopApi.DTOs;
@@ -6,8 +7,26 @@ using ShopApi.Repositories;
 
 namespace ShopApi.Services;
 
-public class CartService(ICartRepository carts, IProductRepository products, AppDbContext db) : ICartService
+public class CartService(
+    ICartRepository carts,
+    IProductRepository products,
+    IOrderRepository orders,
+    AppDbContext db) : ICartService
 {
+    private static readonly TimeZoneInfo ShopTimeZone = ResolveShopTimeZone();
+
+    private static TimeZoneInfo ResolveShopTimeZone()
+    {
+        try
+        {
+            return TimeZoneInfo.FindSystemTimeZoneById("Asia/Bangkok");
+        }
+        catch (TimeZoneNotFoundException)
+        {
+            return TimeZoneInfo.Utc;
+        }
+    }
+
     public async Task<Guid> CreateAsync(CancellationToken ct = default)
     {
         var cart = new Cart { Id = Guid.NewGuid() };
@@ -133,6 +152,99 @@ public class CartService(ICartRepository carts, IProductRepository products, App
 
         return await GetAsync(cartId, ct);
     }
+
+    public async Task<CheckoutResultDto> CheckoutAsync(Guid cartId, CheckoutRequest? request, CancellationToken ct = default)
+    {
+        await using var tx = await db.Database.BeginTransactionAsync(ct);
+
+        // อ่านตะกร้าใหม่ "ข้างใน" transaction — เผื่อเคสผู้ใช้กดปุ่มจ่ายรัวๆ 2 ครั้ง
+        var cart = await carts.GetCartWithItemsAsync(cartId, ct)
+            ?? throw new NotFoundException("CART_NOT_FOUND", "ไม่พบตะกร้าสินค้า");
+
+        // เลือกว่าจะจ่ายรายการไหน — ไม่ส่งมา = ทั้งตะกร้า
+        var selectedIds = request?.CartItemIds;
+        var items = selectedIds is null || selectedIds.Count == 0
+            ? cart.Items.ToList()
+            : cart.Items.Where(i => selectedIds.Contains(i.Id)).ToList();
+
+        if (items.Count == 0)
+        {
+            throw new BusinessException("CART_EMPTY", "ไม่มีสินค้าที่จะชำระเงิน");
+        }
+
+        // ⭐ validate สต๊อกซ้ำอีกรอบ — เนื่องจากระหว่างที่ของอยู่ในตะกร้าไม่ได้จองสต๊อกไว้
+        var shortages = items
+            .Where(i => i.Product.Stock.Quantity < i.Quantity)
+            .Select(i => new
+            {
+                productId = i.ProductId,
+                productName = i.Product.Name,
+                requested = i.Quantity,
+                availableStock = i.Product.Stock.Quantity
+            })
+            .ToList();
+
+        if (shortages.Count > 0)
+        {
+            throw new BusinessException(
+                "INSUFFICIENT_STOCK", "สินค้าบางรายการคงเหลือไม่พอ", shortages);
+        }
+
+        // ⭐ ตัดสต๊อก
+        foreach (var item in items)
+        {
+            item.Product.Stock.Quantity -= item.Quantity;
+        }
+
+        var order = new Order
+        {
+            OrderNo = await GenerateOrderNoAsync(ct),
+            Items = items.Select(i => new OrderItem
+            {
+                ProductId = i.ProductId,
+                ProductCode = i.Product.Code,
+                ProductName = i.Product.Name,
+                UnitPrice = i.Product.UnitPrice,
+                Quantity = i.Quantity,
+                LineTotal = i.Product.UnitPrice * i.Quantity
+            }).ToList()
+        };
+
+        order.TotalAmount = order.Items.Sum(x => x.LineTotal);
+        order.TotalItems = order.Items.Sum(x => x.Quantity);
+
+        orders.Add(order);
+
+        db.CartItems.RemoveRange(items);
+        cart.UpdatedAt = DateTime.UtcNow;
+
+        await db.SaveChangesAsync(ct);
+        await tx.CommitAsync(ct);
+
+        return ToCheckoutResult(order);
+    }
+
+    private async Task<string> GenerateOrderNoAsync(CancellationToken ct)
+    {
+        var today = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, ShopTimeZone);
+
+        var datePart = today.ToString("yyyyMMdd", CultureInfo.InvariantCulture);
+        var prefix = $"ORD-{datePart}-";
+        var todayCount = await orders.CountByOrderNoPrefixAsync(prefix, ct);
+
+        return prefix + (todayCount + 1).ToString("D4", CultureInfo.InvariantCulture);
+    }
+
+    private static CheckoutResultDto ToCheckoutResult(Order order) => new(
+        order.Id,
+        order.OrderNo,
+        order.CreatedAt,
+        order.TotalItems,
+        order.TotalAmount,
+        order.Items
+            .Select(i => new CheckoutItemDto(
+                i.ProductId, i.ProductCode, i.ProductName, i.UnitPrice, i.Quantity, i.LineTotal))
+            .ToList());
 
     private static CartDto ToResponse(Cart cart)
     {
