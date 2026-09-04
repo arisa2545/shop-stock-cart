@@ -61,6 +61,12 @@ export const api = {
       method: "PUT",
       body: JSON.stringify({ quantity }),
     }),
+
+  removeCartItem: (cartId: string, productId: number) =>
+    request<Cart>(`/carts/${cartId}/items/${productId}`, { method: "DELETE" }),
+
+  clearCart: (cartId: string) =>
+    request<Cart>(`/carts/${cartId}/items`, { method: "DELETE" }),
 };
 
 /** รวม base ของ static files กับ path จาก BE เช่น /products/P001.jpg */

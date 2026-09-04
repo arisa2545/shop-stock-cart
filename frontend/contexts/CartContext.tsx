@@ -33,6 +33,8 @@ type CartContextValue = {
   refreshCart: () => Promise<void>;
   addToCart: (productId: number, quantity?: number) => Promise<boolean>;
   updateQuantity: (productId: number, quantity: number) => Promise<boolean>;
+  removeItem: (productId: number) => Promise<boolean>;
+  clearCart: () => Promise<boolean>;
 };
 
 const CartContext = createContext<CartContextValue | null>(null);
@@ -155,6 +157,61 @@ export function CartProvider({ children }: { children: ReactNode }) {
     [ensureCart],
   );
 
+  const removeItem = useCallback(
+    async (productId: number) => {
+      try {
+        const id = await ensureCart();
+        const next = await api.removeCartItem(id, productId);
+        setCart(next);
+        setToast({ message: "ลบสินค้าออกจากตะกร้าแล้ว", tone: "success" });
+        return true;
+      } catch (err) {
+        if (err instanceof ApiRequestError) {
+          // ลบไปแล้ว (กดปุ่มรัว) → ผลลัพธ์ที่ผู้ใช้ต้องการเกิดขึ้นแล้ว ไม่ต้องขึ้น toast แดง
+          if (err.code === "CART_ITEM_NOT_FOUND") {
+            await ensureCart();
+            return true;
+          }
+
+          if (err.status === 404) {
+            await createAndPersistCart();
+            return true;
+          }
+
+          setToast({ message: err.message, tone: "error" });
+          return false;
+        }
+
+        setToast({ message: "ลบสินค้าไม่สำเร็จ", tone: "error" });
+        return false;
+      }
+    },
+    [createAndPersistCart, ensureCart],
+  );
+
+  const clearCart = useCallback(async () => {
+    try {
+      const id = await ensureCart();
+      const next = await api.clearCart(id);
+      setCart(next);
+      setToast({ message: "ล้างตะกร้าแล้ว", tone: "success" });
+      return true;
+    } catch (err) {
+      if (err instanceof ApiRequestError) {
+        if (err.status === 404) {
+          await createAndPersistCart();
+          return true;
+        }
+
+        setToast({ message: err.message, tone: "error" });
+        return false;
+      }
+
+      setToast({ message: "ล้างตะกร้าไม่สำเร็จ", tone: "error" });
+      return false;
+    }
+  }, [createAndPersistCart, ensureCart]);
+
   useEffect(() => {
     let cancelled = false;
 
@@ -197,6 +254,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
         refreshCart,
         addToCart,
         updateQuantity,
+        removeItem,
+        clearCart,
       }}
     >
       {children}

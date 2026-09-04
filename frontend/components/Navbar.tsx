@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { CartIcon } from "@/components/icons";
 import { useCart } from "@/contexts/CartContext";
 
 export function Navbar() {
@@ -40,26 +41,5 @@ export function Navbar() {
         </nav>
       </div>
     </header>
-  );
-}
-
-function CartIcon() {
-  return (
-    <svg
-      width="20"
-      height="20"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden
-    >
-      <path d="M6 6h15l-1.5 9h-12z" />
-      <path d="M6 6 5 3H2" />
-      <circle cx="9" cy="20" r="1.2" fill="currentColor" stroke="none" />
-      <circle cx="18" cy="20" r="1.2" fill="currentColor" stroke="none" />
-    </svg>
   );
 }
