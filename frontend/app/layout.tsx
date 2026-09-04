@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Sarabun, Space_Grotesk } from "next/font/google";
 import { Navbar } from "@/components/Navbar";
+import { Toast } from "@/components/Toast";
 import { CartProvider } from "@/contexts/CartContext";
 import "@/styles/globals.css";
 
@@ -33,6 +34,7 @@ export default function RootLayout({
           <div className="site-shell">
             <Navbar />
             <main className="page">{children}</main>
+            <Toast />
           </div>
         </CartProvider>
       </body>

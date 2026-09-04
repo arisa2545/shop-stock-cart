@@ -16,13 +16,22 @@ const CART_STORAGE_KEY = "shop-stock-cart:cartId";
 /** กัน create ซ้ำตอน Provider + หน้า cart / React Strict Mode ยิงพร้อมกัน */
 let ensureCartInFlight: Promise<string> | null = null;
 
+type ToastState = {
+  message: string;
+  tone: "success" | "error";
+} | null;
+
 type CartContextValue = {
   cart: Cart | null;
   cartId: string | null;
+  totalItems: number;
   loading: boolean;
   error: string | null;
+  toast: ToastState;
+  clearToast: () => void;
   ensureCart: () => Promise<string>;
   refreshCart: () => Promise<void>;
+  addToCart: (productId: number, quantity?: number) => Promise<boolean>;
 };
 
 const CartContext = createContext<CartContextValue | null>(null);
@@ -32,6 +41,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [cartId, setCartId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [toast, setToast] = useState<ToastState>(null);
+
+  const clearToast = useCallback(() => setToast(null), []);
 
   const persistCartId = useCallback((id: string) => {
     localStorage.setItem(CART_STORAGE_KEY, id);
@@ -83,6 +95,45 @@ export function CartProvider({ children }: { children: ReactNode }) {
     await ensureCart();
   }, [ensureCart]);
 
+  const addToCart = useCallback(
+    async (productId: number, quantity = 1) => {
+      try {
+        const id = await ensureCart();
+        const next = await api.addToCart(id, productId, quantity);
+        setCart(next);
+        setToast({ message: "เพิ่มลงตะกร้าแล้ว", tone: "success" });
+        return true;
+      } catch (err) {
+        if (err instanceof ApiRequestError) {
+          // ตะกร้าหายกลางทาง → สร้างใหม่แล้วลองอีกครั้ง
+          if (err.status === 404) {
+            try {
+              const id = await createAndPersistCart();
+              const next = await api.addToCart(id, productId, quantity);
+              setCart(next);
+              setToast({ message: "เพิ่มลงตะกร้าแล้ว", tone: "success" });
+              return true;
+            } catch (retryErr) {
+              const message =
+                retryErr instanceof ApiRequestError
+                  ? retryErr.message
+                  : "เพิ่มสินค้าไม่สำเร็จ";
+              setToast({ message, tone: "error" });
+              return false;
+            }
+          }
+
+          setToast({ message: err.message, tone: "error" });
+          return false;
+        }
+
+        setToast({ message: "เพิ่มสินค้าไม่สำเร็จ", tone: "error" });
+        return false;
+      }
+    },
+    [createAndPersistCart, ensureCart],
+  );
+
   useEffect(() => {
     let cancelled = false;
 
@@ -105,15 +156,25 @@ export function CartProvider({ children }: { children: ReactNode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useEffect(() => {
+    if (!toast) return;
+    const timer = window.setTimeout(() => setToast(null), 3200);
+    return () => window.clearTimeout(timer);
+  }, [toast]);
+
   return (
     <CartContext.Provider
       value={{
         cart,
         cartId,
+        totalItems: cart?.totalItems ?? 0,
         loading,
         error,
+        toast,
+        clearToast,
         ensureCart,
         refreshCart,
+        addToCart,
       }}
     >
       {children}

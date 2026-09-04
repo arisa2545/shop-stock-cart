@@ -2,9 +2,11 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useCart } from "@/contexts/CartContext";
 
 export function Navbar() {
   const pathname = usePathname();
+  const { totalItems } = useCart();
   const onCart = pathname.startsWith("/cart");
 
   return (
@@ -25,10 +27,15 @@ export function Navbar() {
           <Link
             href="/cart"
             className={`cart-link ${onCart ? "is-active" : ""}`}
-            aria-label="ตะกร้าสินค้า"
+            aria-label={`ตะกร้าสินค้า ${totalItems} รายการ`}
           >
             <CartIcon />
             <span>ตะกร้า</span>
+            {totalItems > 0 ? (
+              <span className="cart-badge" aria-hidden>
+                {totalItems > 99 ? "99+" : totalItems}
+              </span>
+            ) : null}
           </Link>
         </nav>
       </div>

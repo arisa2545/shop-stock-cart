@@ -134,7 +134,23 @@ button {
 }
 
 .cart-link {
+  position: relative;
   font-weight: 600;
+}
+
+.cart-badge {
+  min-width: 1.35rem;
+  height: 1.35rem;
+  padding: 0 0.35rem;
+  border-radius: 999px;
+  background: var(--accent);
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
 }
 
 .page {
@@ -142,4 +158,57 @@ button {
   margin: 0 auto;
   padding: 1.75rem 0 3rem;
   flex: 1;
+}
+
+.toast {
+  position: fixed;
+  right: 1rem;
+  bottom: 1rem;
+  z-index: 50;
+  max-width: min(360px, calc(100vw - 2rem));
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.85rem 1rem;
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  animation: toast-in 0.25s ease;
+}
+
+.toast p {
+  margin: 0;
+  flex: 1;
+  font-size: 0.95rem;
+}
+
+.toast--success {
+  background: #e8f7ef;
+  color: var(--accent-strong);
+  border: 1px solid #b9dfc9;
+}
+
+.toast--error {
+  background: var(--danger-soft);
+  color: var(--danger);
+  border: 1px solid #e4b4b4;
+}
+
+.toast__close {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0.2rem 0.35rem;
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

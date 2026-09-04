@@ -49,6 +49,12 @@ export const api = {
   createCart: () => request<{ cartId: string }>("/carts", { method: "POST" }),
 
   getCart: (cartId: string) => request<Cart>(`/carts/${cartId}`),
+
+  addToCart: (cartId: string, productId: number, quantity = 1) =>
+    request<Cart>(`/carts/${cartId}/items`, {
+      method: "POST",
+      body: JSON.stringify({ productId, quantity }),
+    }),
 };
 
 /** รวม base ของ static files กับ path จาก BE เช่น /products/P001.jpg */
