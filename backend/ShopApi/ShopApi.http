@@ -1,0 +1,7 @@
+@ShopApi_HostAddress = http://localhost:5223
+
+### OpenAPI document (Development only)
+GET {{ShopApi_HostAddress}}/openapi/v1.json
+Accept: application/json
+
+###
