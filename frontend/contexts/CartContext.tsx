@@ -9,7 +9,8 @@ import {
   type ReactNode,
 } from "react";
 import { api, ApiRequestError } from "@/lib/api";
-import type { Cart, CheckoutResult } from "@/types";
+import type { Cart } from "@/types/cart";
+import type { CheckoutResult } from "@/types/checkout";
 
 const CART_STORAGE_KEY = "shop-stock-cart:cartId";
 

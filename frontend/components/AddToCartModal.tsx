@@ -2,7 +2,7 @@
 
 import { useEffect, useId, useState } from "react";
 import { formatPricePerUnit } from "@/lib/format";
-import type { Product } from "@/types";
+import type { Product } from "@/types/product";
 
 type Props = {
   product: Product;

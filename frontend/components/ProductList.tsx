@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
-import type { Product } from "@/types";
+import type { Product } from "@/types/product";
 import { ProductCard } from "./ProductCard";
 
 export function ProductList() {

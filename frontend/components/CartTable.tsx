@@ -8,7 +8,7 @@ import { QuantityStepper } from "@/components/QuantityStepper";
 import { useCart } from "@/contexts/CartContext";
 import { assetUrl } from "@/lib/api";
 import { formatPricePerUnit, formatTHB } from "@/lib/format";
-import type { CartItem } from "@/types";
+import type { CartItem } from "@/types/cart";
 
 const DEBOUNCE_MS = 350;
 

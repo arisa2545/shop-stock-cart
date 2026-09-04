@@ -1,4 +1,7 @@
-import type { ApiError, Cart, CheckoutResult, Product } from "@/types";
+import type { ApiError } from "@/types/api";
+import type { Cart } from "@/types/cart";
+import type { CheckoutResult } from "@/types/checkout";
+import type { Product } from "@/types/product";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5223/api";
 

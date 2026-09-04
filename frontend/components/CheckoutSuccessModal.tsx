@@ -3,7 +3,7 @@
 import { useEffect, useId } from "react";
 import { useRouter } from "next/navigation";
 import { formatTHB } from "@/lib/format";
-import type { CheckoutResult } from "@/types";
+import type { CheckoutResult } from "@/types/checkout";
 
 const dateTime = new Intl.DateTimeFormat("th-TH", {
   dateStyle: "medium",

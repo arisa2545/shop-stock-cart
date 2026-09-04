@@ -7,7 +7,7 @@ import { CheckoutSuccessModal } from "@/components/CheckoutSuccessModal";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { useCart } from "@/contexts/CartContext";
 import { formatTHB } from "@/lib/format";
-import type { CheckoutResult } from "@/types";
+import type { CheckoutResult } from "@/types/checkout";
 
 export function CartView() {
   const { cart, loading, error, refreshCart, clearCart, checkout } = useCart();

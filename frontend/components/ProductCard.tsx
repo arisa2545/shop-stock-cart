@@ -6,7 +6,7 @@ import { AddToCartModal } from "@/components/AddToCartModal";
 import { assetUrl } from "@/lib/api";
 import { formatPricePerUnit } from "@/lib/format";
 import { useCart } from "@/contexts/CartContext";
-import type { Product } from "@/types";
+import type { Product } from "@/types/product";
 
 type Props = {
   product: Product;
