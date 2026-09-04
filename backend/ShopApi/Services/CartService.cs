@@ -123,7 +123,6 @@ public class CartService(ICartRepository carts, IProductRepository products, App
         var cart = await carts.GetCartWithItemsAsync(cartId, ct)
             ?? throw new NotFoundException("CART_NOT_FOUND", "ไม่พบตะกร้าสินค้า");
 
-        // ตะกร้าว่างอยู่แล้วก็ถือว่าสำเร็จ ไม่ต้อง error — กดล้างซ้ำต้องไม่พัง
         if (cart.Items.Count > 0)
         {
             db.CartItems.RemoveRange(cart.Items);
@@ -132,7 +131,6 @@ public class CartService(ICartRepository carts, IProductRepository products, App
             await db.SaveChangesAsync(ct);
         }
 
-        // ❌ ไม่ลบแถว Carts — ตะกร้าเป็นของถาวร cartId ใน localStorage ต้องใช้ต่อได้
         return await GetAsync(cartId, ct);
     }
 
