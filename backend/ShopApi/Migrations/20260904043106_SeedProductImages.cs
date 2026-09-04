@@ -62,6 +62,13 @@ namespace ShopApi.Migrations
             migrationBuilder.UpdateData(
                 table: "Products",
                 keyColumn: "Id",
+                keyValue: 8,
+                column: "ImageUrl",
+                value: "/products/P008.jpg");
+
+            migrationBuilder.UpdateData(
+                table: "Products",
+                keyColumn: "Id",
                 keyValue: 9,
                 column: "ImageUrl",
                 value: "/products/P009.jpg");
@@ -72,6 +79,13 @@ namespace ShopApi.Migrations
                 keyValue: 10,
                 column: "ImageUrl",
                 value: "/products/P010.jpg");
+
+            migrationBuilder.UpdateData(
+                table: "Products",
+                keyColumn: "Id",
+                keyValue: 11,
+                column: "ImageUrl",
+                value: "/products/P011.jpg");
 
             migrationBuilder.UpdateData(
                 table: "Products",
@@ -157,6 +171,13 @@ namespace ShopApi.Migrations
             migrationBuilder.UpdateData(
                 table: "Products",
                 keyColumn: "Id",
+                keyValue: 8,
+                column: "ImageUrl",
+                value: null);
+
+            migrationBuilder.UpdateData(
+                table: "Products",
+                keyColumn: "Id",
                 keyValue: 9,
                 column: "ImageUrl",
                 value: null);
@@ -165,6 +186,13 @@ namespace ShopApi.Migrations
                 table: "Products",
                 keyColumn: "Id",
                 keyValue: 10,
+                column: "ImageUrl",
+                value: null);
+
+            migrationBuilder.UpdateData(
+                table: "Products",
+                keyColumn: "Id",
+                keyValue: 11,
                 column: "ImageUrl",
                 value: null);
 
